@@ -4,9 +4,9 @@ use ark_crypto_primitives::{
     crh::{poseidon::CRH, CRHScheme},
     sponge::{poseidon::PoseidonConfig, Absorb},
 };
-use ark_ec::{AffineRepr, CurveGroup, Group};
-use ark_ff::{BigInteger, Field, PrimeField, ToConstraintField};
-use ark_r1cs_std::{groups::GroupOpsBounds, prelude::CurveVar, ToConstraintFieldGadget};
+use ark_ec::{AdditiveGroup, AffineRepr, CurveGroup};
+use ark_ff::{BigInteger, PrimeField, ToConstraintField};
+use ark_r1cs_std::{convert::ToConstraintFieldGadget, groups::GroupOpsBounds, prelude::CurveVar};
 use ark_std::fmt::Debug;
 use ark_std::{One, Zero};
 use core::marker::PhantomData;
@@ -59,7 +59,7 @@ impl<C: CurveGroup> CommittedInstance<C> {
 
 impl<C: CurveGroup> CommittedInstance<C>
 where
-    <C as Group>::ScalarField: Absorb,
+    C::ScalarField: Absorb,
     <C as ark_ec::CurveGroup>::BaseField: ark_ff::PrimeField,
 {
     /// hash implements the committed instance hash compatible with the gadget implemented in
@@ -107,7 +107,7 @@ where
             .flat_map(nonnative_field_to_field_elements)
             .collect::<Vec<_>>();
         let (cmE_x, cmE_y, cmE_is_inf) = match self.cmE.into_affine().xy() {
-            Some((&x, &y)) => (x, y, C::BaseField::zero()),
+            Some((x, y)) => (x, y, C::BaseField::zero()),
             None => (
                 C::BaseField::zero(),
                 C::BaseField::zero(),
@@ -115,7 +115,7 @@ where
             ),
         };
         let (cmW_x, cmW_y, cmW_is_inf) = match self.cmW.into_affine().xy() {
-            Some((&x, &y)) => (x, y, C::BaseField::zero()),
+            Some((x, y)) => (x, y, C::BaseField::zero()),
             None => (
                 C::BaseField::zero(),
                 C::BaseField::zero(),
@@ -155,7 +155,7 @@ pub struct Witness<C: CurveGroup> {
 
 impl<C: CurveGroup> Witness<C>
 where
-    <C as Group>::ScalarField: Absorb,
+    C::ScalarField: Absorb,
 {
     pub fn new(w: Vec<C::ScalarField>, e_len: usize) -> Self {
         // note: at the current version, we don't use the blinding factors and we set them to 0
@@ -261,8 +261,8 @@ where
     CS2: CommitmentScheme<C2>,
     <C1 as CurveGroup>::BaseField: PrimeField,
     <C2 as CurveGroup>::BaseField: PrimeField,
-    <C1 as Group>::ScalarField: Absorb,
-    <C2 as Group>::ScalarField: Absorb,
+    C1::ScalarField: Absorb,
+    C2::ScalarField: Absorb,
     C1: CurveGroup<BaseField = C2::ScalarField, ScalarField = C2::BaseField>,
     for<'a> &'a GC1: GroupOpsBounds<'a, C1, GC1>,
     for<'a> &'a GC2: GroupOpsBounds<'a, C2, GC2>,
@@ -603,8 +603,8 @@ where
     CS1: CommitmentScheme<C1>,
     CS2: CommitmentScheme<C2>,
     <C2 as CurveGroup>::BaseField: PrimeField,
-    <C1 as Group>::ScalarField: Absorb,
-    <C2 as Group>::ScalarField: Absorb,
+    C1::ScalarField: Absorb,
+    C2::ScalarField: Absorb,
     C1: CurveGroup<BaseField = C2::ScalarField, ScalarField = C2::BaseField>,
 {
     // computes T and cmT for the AugmentedFCircuit
@@ -648,8 +648,8 @@ where
     CS2: CommitmentScheme<C2>,
     <C1 as CurveGroup>::BaseField: PrimeField,
     <C2 as CurveGroup>::BaseField: PrimeField,
-    <C1 as Group>::ScalarField: Absorb,
-    <C2 as Group>::ScalarField: Absorb,
+    C1::ScalarField: Absorb,
+    C2::ScalarField: Absorb,
     C1: CurveGroup<BaseField = C2::ScalarField, ScalarField = C2::BaseField>,
     for<'a> &'a GC1: GroupOpsBounds<'a, C1, GC1>,
     for<'a> &'a GC2: GroupOpsBounds<'a, C2, GC2>,
@@ -737,8 +737,8 @@ where
     FC: FCircuit<C1::ScalarField>,
     <C1 as CurveGroup>::BaseField: PrimeField,
     <C2 as CurveGroup>::BaseField: PrimeField,
-    <C1 as Group>::ScalarField: Absorb,
-    <C2 as Group>::ScalarField: Absorb,
+    C1::ScalarField: Absorb,
+    C2::ScalarField: Absorb,
     C1: CurveGroup<BaseField = C2::ScalarField, ScalarField = C2::BaseField>,
     for<'a> &'a GC1: GroupOpsBounds<'a, C1, GC1>,
     for<'a> &'a GC2: GroupOpsBounds<'a, C2, GC2>,
@@ -765,8 +765,8 @@ where
     FC: FCircuit<C1::ScalarField>,
     <C1 as CurveGroup>::BaseField: PrimeField,
     <C2 as CurveGroup>::BaseField: PrimeField,
-    <C1 as Group>::ScalarField: Absorb,
-    <C2 as Group>::ScalarField: Absorb,
+    C1::ScalarField: Absorb,
+    C2::ScalarField: Absorb,
     C1: CurveGroup<BaseField = C2::ScalarField, ScalarField = C2::BaseField>,
     for<'a> &'a GC1: GroupOpsBounds<'a, C1, GC1>,
     for<'a> &'a GC2: GroupOpsBounds<'a, C2, GC2>,
@@ -778,10 +778,10 @@ where
 /// returns the coordinates of a commitment point. This is compatible with the arkworks
 /// GC.to_constraint_field()[..2]
 pub(crate) fn get_cm_coordinates<C: CurveGroup>(cm: &C) -> Vec<C::BaseField> {
-    let zero = (&C::BaseField::zero(), &C::BaseField::zero());
+    let zero = (C::BaseField::zero(), C::BaseField::zero());
     let cm = cm.into_affine();
     let (cm_x, cm_y) = cm.xy().unwrap_or(zero);
-    vec![*cm_x, *cm_y]
+    vec![cm_x, cm_y]
 }
 
 #[cfg(test)]

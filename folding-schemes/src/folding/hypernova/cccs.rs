@@ -57,7 +57,7 @@ impl<C: CurveGroup> CCS<C> {
 
     /// Computes q(x) = \sum^q c_i * \prod_{j \in S_i} ( \sum_{y \in {0,1}^s'} M_j(x, y) * z(y) )
     /// polynomial over x
-    pub fn compute_q(&self, z: &Vec<C::ScalarField>) -> VirtualPolynomial<C::ScalarField> {
+    pub fn compute_q(&self, z: &[C::ScalarField]) -> VirtualPolynomial<C::ScalarField> {
         let z_mle = vec_to_mle(self.s_prime, z);
         let mut q = VirtualPolynomial::<C::ScalarField>::new(self.s);
 
@@ -94,7 +94,7 @@ impl<C: CurveGroup> CCS<C> {
     /// polynomial over x
     pub fn compute_Q(
         &self,
-        z: &Vec<C::ScalarField>,
+        z: &[C::ScalarField],
         beta: &[C::ScalarField],
     ) -> VirtualPolynomial<C::ScalarField> {
         let q = self.compute_q(z);
@@ -137,7 +137,6 @@ pub mod tests {
     use super::*;
     use crate::ccs::tests::{get_test_ccs, get_test_z};
     use ark_std::test_rng;
-    use ark_std::UniformRand;
 
     use ark_pallas::{Fr, Projective};
 

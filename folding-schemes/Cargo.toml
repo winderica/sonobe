@@ -14,7 +14,7 @@ ark-relations = { version = "^0.4.0", default-features = false }
 ark-r1cs-std = { version = "0.4.0", default-features = false } # this is patched at the workspace level
 ark-snark = { version = "^0.4.0"}
 ark-serialize = "^0.4.0"
-ark-circom = { git = "https://github.com/arnaucube/circom-compat.git" }
+ark-circom = { git = "https://github.com/winderica/circom-compat/", branch = "arkworks-next" }
 thiserror = "1.0"
 rayon = "1.7.0"
 num-bigint = "0.4"
@@ -22,9 +22,6 @@ num-integer = "0.1"
 color-eyre = "=0.6.2"
 ark-bn254 = {version="0.4.0"}
 ark-groth16 = { version = "^0.4.0" }
-
-# tmp imports for espresso's sumcheck
-espresso_subroutines = {git="https://github.com/EspressoSystems/hyperplonk", package="subroutines"}
 
 [dev-dependencies]
 ark-pallas = {version="0.4.0", features=["r1cs"]}

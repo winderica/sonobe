@@ -34,26 +34,26 @@ pub fn matrix_to_mle<F: PrimeField>(matrix: SparseMatrix<F>) -> DenseMultilinear
 }
 
 /// Takes the n_vars and a dense vector and returns its dense MLE.
-pub fn vec_to_mle<F: PrimeField>(n_vars: usize, v: &Vec<F>) -> DenseMultilinearExtension<F> {
+pub fn vec_to_mle<F: PrimeField>(n_vars: usize, v: &[F]) -> DenseMultilinearExtension<F> {
     let v_padded: Vec<F> = if v.len() != (1 << n_vars) {
         // pad to 2^n_vars
         [
-            v.clone(),
+            v.to_owned(),
             std::iter::repeat(F::zero())
                 .take((1 << n_vars) - v.len())
                 .collect(),
         ]
         .concat()
     } else {
-        v.clone()
+        v.to_owned()
     };
     DenseMultilinearExtension::<F>::from_evaluations_vec(n_vars, v_padded)
 }
 
-pub fn dense_vec_to_mle<F: PrimeField>(n_vars: usize, v: &Vec<F>) -> DenseMultilinearExtension<F> {
+pub fn dense_vec_to_mle<F: PrimeField>(n_vars: usize, v: &[F]) -> DenseMultilinearExtension<F> {
     // Pad to 2^n_vars
     let v_padded: Vec<F> = [
-        v.clone(),
+        v.to_owned(),
         std::iter::repeat(F::zero())
             .take((1 << n_vars) - v.len())
             .collect(),
@@ -71,7 +71,7 @@ mod tests {
         utils::multilinear_polynomial::tests::fix_last_variables,
         utils::{hypercube::BooleanHypercube, vec::tests::to_F_matrix},
     };
-    use ark_poly::MultilinearExtension;
+    use ark_poly::{MultilinearExtension, Polynomial};
     use ark_std::Zero;
 
     use ark_pallas::Fr;
@@ -105,7 +105,7 @@ mod tests {
         for (i, A_row) in A_padded_dense.iter().enumerate() {
             for (j, _) in A_row.iter().enumerate() {
                 let s_i_j = bhc.at_i(i * A_row.len() + j);
-                assert_eq!(A_mle.evaluate(&s_i_j).unwrap(), A_padded_dense[i][j]);
+                assert_eq!(A_mle.evaluate(&s_i_j), A_padded_dense[i][j]);
             }
         }
     }
@@ -120,12 +120,12 @@ mod tests {
         let bhc = BooleanHypercube::new(z_mle.num_vars);
         for (i, z_i) in z.iter().enumerate() {
             let s_i = bhc.at_i(i);
-            assert_eq!(z_mle.evaluate(&s_i).unwrap(), z_i.clone());
+            assert_eq!(z_mle.evaluate(&s_i), z_i.clone());
         }
         // for the rest of elements of the boolean hypercube, expect it to evaluate to zero
         for i in (z.len())..(1 << z_mle.num_vars) {
             let s_i = bhc.at_i(i);
-            assert_eq!(z_mle.evaluate(&s_i).unwrap(), Fr::zero());
+            assert_eq!(z_mle.evaluate(&s_i), Fr::zero());
         }
     }
 

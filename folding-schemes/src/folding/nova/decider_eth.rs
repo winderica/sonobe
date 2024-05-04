@@ -1,10 +1,10 @@
 /// This file implements the onchain (Ethereum's EVM) decider.
 use ark_bn254::Bn254;
 use ark_crypto_primitives::sponge::Absorb;
-use ark_ec::{AffineRepr, CurveGroup, Group};
+use ark_ec::{AffineRepr, CurveGroup};
 use ark_ff::{BigInteger, PrimeField};
 use ark_groth16::Groth16;
-use ark_r1cs_std::{groups::GroupOpsBounds, prelude::CurveVar, ToConstraintFieldGadget};
+use ark_r1cs_std::{convert::ToConstraintFieldGadget, groups::GroupOpsBounds, prelude::CurveVar};
 use ark_snark::SNARK;
 use ark_std::rand::{CryptoRng, RngCore};
 use ark_std::{One, Zero};
@@ -74,8 +74,8 @@ where
     FS: FoldingScheme<C1, C2, FC>,
     <C1 as CurveGroup>::BaseField: PrimeField,
     <C2 as CurveGroup>::BaseField: PrimeField,
-    <C1 as Group>::ScalarField: Absorb,
-    <C2 as Group>::ScalarField: Absorb,
+    C1::ScalarField: Absorb,
+    C2::ScalarField: Absorb,
     C1: CurveGroup<BaseField = C2::ScalarField, ScalarField = C2::BaseField>,
     for<'b> &'b GC2: GroupOpsBounds<'b, C2, GC2>,
     // constrain FS into Nova, since this is a Decider specifically for Nova
@@ -261,13 +261,13 @@ where
     C::BaseField: PrimeField,
 {
     // the encoding of the additive identity is [0, 0] on the EVM
-    let zero_point = (&C::BaseField::zero(), &C::BaseField::zero());
+    let zero_point = (C::BaseField::zero(), C::BaseField::zero());
     let (x, y) = p.xy().unwrap_or(zero_point);
 
     Ok([x.into_bigint().to_bytes_be(), y.into_bigint().to_bytes_be()].concat())
 }
 fn point2_to_eth_format(p: ark_bn254::G2Affine) -> Result<Vec<u8>, Error> {
-    let zero_point = (&ark_bn254::Fq2::zero(), &ark_bn254::Fq2::zero());
+    let zero_point = (ark_bn254::Fq2::zero(), ark_bn254::Fq2::zero());
     let (x, y) = p.xy().unwrap_or(zero_point);
 
     Ok([
@@ -282,13 +282,12 @@ fn point2_to_eth_format(p: ark_bn254::G2Affine) -> Result<Vec<u8>, Error> {
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use ark_bn254::{constraints::GVar, Bn254, Fr, G1Projective as Projective};
-    use ark_groth16::Groth16;
+    use ark_bn254::{constraints::GVar, Fr, G1Projective as Projective};
     use ark_grumpkin::{constraints::GVar as GVar2, Projective as Projective2};
     use ark_poly_commit::kzg10::VerifierKey as KZGVerifierKey;
     use std::time::Instant;
 
-    use crate::commitment::kzg::{ProverKey as KZGProverKey, KZG};
+    use crate::commitment::kzg::ProverKey as KZGProverKey;
     use crate::commitment::pedersen::Pedersen;
     use crate::folding::nova::{get_cs_params_len, ProverParams};
     use crate::frontend::tests::CubicFCircuit;

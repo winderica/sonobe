@@ -1,5 +1,5 @@
 use ark_crypto_primitives::sponge::Absorb;
-use ark_ec::{CurveGroup, Group};
+use ark_ec::CurveGroup;
 use ark_std::{One, Zero};
 
 use super::{CommittedInstance, Witness};
@@ -29,7 +29,7 @@ pub trait NovaR1CS<C: CurveGroup> {
 
 impl<C: CurveGroup> NovaR1CS<C> for R1CS<C::ScalarField>
 where
-    <C as Group>::ScalarField: Absorb,
+    C::ScalarField: Absorb,
     <C as ark_ec::CurveGroup>::BaseField: ark_ff::PrimeField,
 {
     fn dummy_instance(&self) -> (Witness<C>, CommittedInstance<C>) {

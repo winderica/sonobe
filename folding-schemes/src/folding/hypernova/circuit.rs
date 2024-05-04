@@ -5,8 +5,8 @@ use crate::{ccs::CCS, folding::circuits::utils::EqEvalGadget};
 use ark_ec::CurveGroup;
 use ark_r1cs_std::{
     alloc::AllocVar,
+    convert::ToBitsGadget,
     fields::{fp::FpVar, FieldVar},
-    ToBitsGadget,
 };
 use ark_relations::r1cs::{ConstraintSystemRef, SynthesisError};
 use ark_std::Zero;

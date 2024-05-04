@@ -1,5 +1,5 @@
 use ark_crypto_primitives::sponge::Absorb;
-use ark_ec::{CurveGroup, Group};
+use ark_ec::CurveGroup;
 use ark_std::Zero;
 use std::marker::PhantomData;
 
@@ -19,7 +19,7 @@ pub struct NIFS<C: CurveGroup, CS: CommitmentScheme<C>> {
 
 impl<C: CurveGroup, CS: CommitmentScheme<C>> NIFS<C, CS>
 where
-    <C as Group>::ScalarField: Absorb,
+    C::ScalarField: Absorb,
 {
     // compute_T: compute cross-terms T
     pub fn compute_T(

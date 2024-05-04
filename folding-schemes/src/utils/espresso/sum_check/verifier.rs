@@ -13,13 +13,15 @@ use super::{
     structs::{IOPProverMessage, IOPVerifierState},
     SumCheckSubClaim, SumCheckVerifier,
 };
-use crate::{transcript::Transcript, utils::virtual_polynomial::VPAuxInfo};
+use crate::{
+    transcript::Transcript,
+    utils::{sum_check::PolyIOPErrors, virtual_polynomial::VPAuxInfo},
+};
 use ark_ec::CurveGroup;
 use ark_ff::PrimeField;
 use ark_poly::Polynomial;
 use ark_poly::{univariate::DensePolynomial, DenseUVPolynomial};
 use ark_std::{end_timer, start_timer};
-use espresso_subroutines::poly_iop::prelude::PolyIOPErrors;
 
 #[cfg(feature = "parallel")]
 use rayon::iter::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator};

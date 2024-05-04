@@ -2,18 +2,18 @@
 /// other more efficient approaches can be used.
 use ark_crypto_primitives::crh::poseidon::constraints::CRHParametersVar;
 use ark_crypto_primitives::sponge::{poseidon::PoseidonConfig, Absorb};
-use ark_ec::{CurveGroup, Group};
+use ark_ec::CurveGroup;
 use ark_ff::{BigInteger, PrimeField};
 use ark_poly::Polynomial;
 use ark_r1cs_std::{
     alloc::{AllocVar, AllocationMode},
     boolean::Boolean,
+    convert::ToConstraintFieldGadget,
     eq::EqGadget,
     fields::{fp::FpVar, FieldVar},
     groups::GroupOpsBounds,
     poly::{domain::Radix2DomainVar, evaluations::univariate::EvaluationsVar},
     prelude::CurveVar,
-    ToConstraintFieldGadget,
 };
 use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystemRef, Namespace, SynthesisError};
 use ark_std::{log2, Zero};
@@ -256,7 +256,7 @@ where
     CS1: CommitmentScheme<C1>,
     // enforce that the CS2 is Pedersen commitment scheme, since we're at Ethereum's EVM decider
     CS2: CommitmentScheme<C2, ProverParams = PedersenParams<C2>>,
-    <C1 as Group>::ScalarField: Absorb,
+    C1::ScalarField: Absorb,
     <C1 as CurveGroup>::BaseField: PrimeField,
 {
     pub fn from_nova<FC: FCircuit<C1::ScalarField>>(
@@ -349,8 +349,8 @@ where
     CS2: CommitmentScheme<C2>,
     <C1 as CurveGroup>::BaseField: PrimeField,
     <C2 as CurveGroup>::BaseField: PrimeField,
-    <C1 as Group>::ScalarField: Absorb,
-    <C2 as Group>::ScalarField: Absorb,
+    C1::ScalarField: Absorb,
+    C2::ScalarField: Absorb,
     C1: CurveGroup<BaseField = C2::ScalarField, ScalarField = C2::BaseField>,
     for<'b> &'b GC2: GroupOpsBounds<'b, C2, GC2>,
 {
@@ -439,7 +439,7 @@ where
             // `#[cfg(not(test))]`
             use crate::commitment::pedersen::PedersenGadget;
             use crate::folding::nova::cyclefold::{CycleFoldCommittedInstanceVar, CF_IO_LEN};
-            use ark_r1cs_std::ToBitsGadget;
+            use ark_r1cs_std::convert::ToBitsGadget;
 
             let cf_u_dummy_native = CommittedInstance::<C2>::dummy(CF_IO_LEN);
             let w_dummy_native = Witness::<C2>::new(
@@ -516,7 +516,7 @@ where
             u_i.clone(),
             cmT.clone(),
         )?;
-        let r_Fr = Boolean::le_bits_to_fp_var(&r_bits)?;
+        let r_Fr = Boolean::le_bits_to_fp(&r_bits)?;
         // check that the in-circuit computed r is equal to the inputted r
         let r =
             FpVar::<CF1<C1>>::new_input(cs.clone(), || Ok(self.r.unwrap_or_else(CF1::<C1>::zero)))?;
@@ -606,7 +606,7 @@ pub mod tests {
         CRHScheme, CRHSchemeGadget,
     };
     use ark_pallas::{constraints::GVar, Fq, Fr, Projective};
-    use ark_r1cs_std::bits::uint8::UInt8;
+    use ark_r1cs_std::uint8::UInt8;
     use ark_relations::r1cs::ConstraintSystem;
     use ark_std::{One, UniformRand};
     use ark_vesta::{constraints::GVar as GVar2, Projective as Projective2};

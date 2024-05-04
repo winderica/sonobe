@@ -181,7 +181,7 @@ where
     _gc: PhantomData<GC>,
 }
 
-use ark_r1cs_std::ToBitsGadget;
+use ark_r1cs_std::convert::ToBitsGadget;
 impl<C, GC, const H: bool> PedersenGadget<C, GC, H>
 where
     C: CurveGroup,
@@ -213,7 +213,6 @@ mod tests {
     use ark_pallas::{constraints::GVar, Fq, Fr, Projective};
     use ark_r1cs_std::{alloc::AllocVar, eq::EqGadget};
     use ark_relations::r1cs::ConstraintSystem;
-    use ark_std::UniformRand;
 
     use super::*;
     use crate::transcript::poseidon::{poseidon_test_config, PoseidonTranscript};

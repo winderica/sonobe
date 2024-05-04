@@ -69,7 +69,7 @@ impl<C: CurveGroup> LCCCS<C> {
     pub fn compute_Ls(
         &self,
         ccs: &CCS<C>,
-        z: &Vec<C::ScalarField>,
+        z: &[C::ScalarField],
     ) -> Vec<VirtualPolynomial<C::ScalarField>> {
         let z_mle = vec_to_mle(ccs.s_prime, z);
         // Convert all matrices to MLE

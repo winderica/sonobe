@@ -77,10 +77,7 @@ mod tests {
     use super::ipa::IPA;
     use super::kzg::{ProverKey, KZG};
     use super::pedersen::Pedersen;
-    use crate::transcript::{
-        poseidon::{poseidon_test_config, PoseidonTranscript},
-        Transcript,
-    };
+    use crate::transcript::poseidon::{poseidon_test_config, PoseidonTranscript};
 
     #[test]
     fn test_homomorphic_property_using_Commitment_trait() {
@@ -139,7 +136,7 @@ mod tests {
         v_1: &[C::ScalarField],
         v_2: &[C::ScalarField],
     ) where
-        <C as ark_ec::Group>::ScalarField: Absorb,
+        C::ScalarField: Absorb,
     {
         // compute the commitment of the two vectors using the given CommitmentScheme
         let cm_1 = CS::commit(prover_params, v_1, &C::ScalarField::zero()).unwrap();

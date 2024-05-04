@@ -1,9 +1,8 @@
-use ark_crypto_primitives::sponge::Absorb;
-use ark_ec::{CurveGroup, Group};
-
 use super::CommittedInstance;
 use crate::transcript::{poseidon::PoseidonTranscript, Transcript};
 use crate::Error;
+use ark_crypto_primitives::sponge::Absorb;
+use ark_ec::CurveGroup;
 
 /// ProtoGalaxyTranscript extends [`Transcript`] with the method to absorb ProtoGalaxy's
 /// CommittedInstance.
@@ -17,7 +16,4 @@ pub trait ProtoGalaxyTranscript<C: CurveGroup>: Transcript<C> {
 }
 
 // Implements ProtoGalaxyTranscript for PoseidonTranscript
-impl<C: CurveGroup> ProtoGalaxyTranscript<C> for PoseidonTranscript<C> where
-    <C as Group>::ScalarField: Absorb
-{
-}
+impl<C: CurveGroup> ProtoGalaxyTranscript<C> for PoseidonTranscript<C> where C::ScalarField: Absorb {}

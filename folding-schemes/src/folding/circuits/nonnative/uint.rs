@@ -7,10 +7,12 @@ use ark_ff::{BigInteger, One, PrimeField, Zero};
 use ark_r1cs_std::{
     alloc::{AllocVar, AllocationMode},
     boolean::Boolean,
+    convert::ToBitsGadget,
+    convert::ToConstraintFieldGadget,
     fields::{fp::FpVar, FieldVar},
     prelude::EqGadget,
     select::CondSelectGadget,
-    R1CSVar, ToBitsGadget, ToConstraintFieldGadget,
+    R1CSVar,
 };
 use ark_relations::r1cs::{ConstraintSystemRef, Namespace, SynthesisError};
 use num_bigint::BigUint;
@@ -33,7 +35,7 @@ pub struct LimbVar<F: PrimeField> {
 impl<F: PrimeField, B: AsRef<[Boolean<F>]>> From<B> for LimbVar<F> {
     fn from(bits: B) -> Self {
         Self {
-            v: Boolean::le_bits_to_fp_var(bits.as_ref()).unwrap(),
+            v: Boolean::le_bits_to_fp(bits.as_ref()).unwrap(),
             ub: (BigUint::one() << bits.as_ref().len()) - BigUint::one(),
         }
     }
@@ -156,7 +158,7 @@ impl<F: PrimeField> ToBitsGadget<F> for LimbVar<F> {
             Vec::new_witness(cs, || Ok(bits))?
         };
 
-        Boolean::le_bits_to_fp_var(&bits)?.enforce_equal(&self.v)?;
+        Boolean::le_bits_to_fp(&bits)?.enforce_equal(&self.v)?;
 
         Ok(bits)
     }
@@ -194,7 +196,7 @@ impl<F: PrimeField> NonNativeUintVar<F> {
         //
         // TODO (@winderica): either make it a global const, or compute an
         // optimal value based on the modulus size
-        55
+        40
     }
 }
 
@@ -505,7 +507,7 @@ impl<F: PrimeField> ToConstraintFieldGadget<F> for NonNativeUintVar<F> {
         let limbs = self
             .to_bits_le()?
             .chunks(bits_per_limb)
-            .map(Boolean::le_bits_to_fp_var)
+            .map(Boolean::le_bits_to_fp)
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok(limbs)
@@ -549,7 +551,7 @@ impl<F: PrimeField> NonNativeUintVar<F> {
             Vec::new_witness(cs, || Ok(bits))?
         };
 
-        Boolean::le_bits_to_fp_var(&bits)?.enforce_equal(x)?;
+        Boolean::le_bits_to_fp(&bits)?.enforce_equal(x)?;
 
         Ok(bits)
     }
@@ -590,7 +592,7 @@ impl<F: PrimeField> NonNativeUintVar<F> {
         )?;
 
         // Below is equivalent to but more efficient than
-        // `Boolean::le_bits_to_fp_var(&bits)?.enforce_equal(&is_neg.select(&x.negate()?, &x)?)?`
+        // `Boolean::le_bits_to_fp(&bits)?.enforce_equal(&is_neg.select(&x.negate()?, &x)?)?`
         // Note that this enforces:
         // 1. The claimed absolute value `is_neg.select(&x.negate()?, &x)?` has
         //    exactly `length` bits.
@@ -607,7 +609,7 @@ impl<F: PrimeField> NonNativeUintVar<F> {
         //           `is_neg.select(&x.negate()?, &x)?` returns `x`, which is
         //           greater than `(|F| - 1) / 2` and cannot fit in `length`
         //           bits.
-        FpVar::from(is_neg).mul_equals(&x.double()?, &(x - Boolean::le_bits_to_fp_var(&bits)?))?;
+        FpVar::from(is_neg).mul_equals(&x.double()?, &(x - Boolean::le_bits_to_fp(&bits)?))?;
 
         Ok(bits)
     }

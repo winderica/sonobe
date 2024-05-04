@@ -1,8 +1,8 @@
 use ark_ec::{AffineRepr, CurveGroup};
 use ark_r1cs_std::{
     alloc::{AllocVar, AllocationMode},
+    convert::ToConstraintFieldGadget,
     fields::fp::FpVar,
-    ToConstraintFieldGadget,
 };
 use ark_relations::r1cs::{Namespace, SynthesisError};
 use ark_std::Zero;
@@ -36,11 +36,11 @@ where
             let cs = cs.into();
 
             let affine = val.borrow().into_affine();
-            let zero_point = (&C::BaseField::zero(), &C::BaseField::zero());
+            let zero_point = (C::BaseField::zero(), C::BaseField::zero());
             let xy = affine.xy().unwrap_or(zero_point);
 
-            let x = NonNativeUintVar::new_variable(cs.clone(), || Ok(*xy.0), mode)?;
-            let y = NonNativeUintVar::new_variable(cs.clone(), || Ok(*xy.1), mode)?;
+            let x = NonNativeUintVar::new_variable(cs.clone(), || Ok(xy.0), mode)?;
+            let y = NonNativeUintVar::new_variable(cs.clone(), || Ok(xy.1), mode)?;
 
             Ok(Self { x, y })
         })
@@ -76,8 +76,8 @@ where
     }
 
     let (x, y) = affine.xy().unwrap();
-    let x = nonnative_field_to_field_elements(x);
-    let y = nonnative_field_to_field_elements(y);
+    let x = nonnative_field_to_field_elements(&x);
+    let y = nonnative_field_to_field_elements(&y);
     Ok((x, y))
 }
 
@@ -100,8 +100,8 @@ where
         }
 
         let (x, y) = affine.xy().unwrap();
-        let x = NonNativeUintVar::inputize(*x);
-        let y = NonNativeUintVar::inputize(*y);
+        let x = NonNativeUintVar::inputize(x);
+        let y = NonNativeUintVar::inputize(y);
         Ok((x, y))
     }
 }

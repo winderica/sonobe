@@ -2,6 +2,7 @@ use ark_ec::CurveGroup;
 use ark_ff::{Field, PrimeField};
 use ark_poly::DenseMultilinearExtension;
 use ark_poly::MultilinearExtension;
+use ark_poly::Polynomial;
 use ark_std::{One, Zero};
 use std::ops::Add;
 
@@ -34,7 +35,7 @@ pub fn compute_all_sum_Mz_evals<F: PrimeField>(
     let mut v = Vec::with_capacity(M_x_y_mle.len());
     for M_i in M_x_y_mle {
         let sum_Mz = compute_sum_Mz(M_i, &z_y_mle, s_prime);
-        let v_i = sum_Mz.evaluate(r).unwrap();
+        let v_i = sum_Mz.fix_variables(r)[0];
         v.push(v_i);
     }
     v
@@ -56,7 +57,7 @@ pub fn compute_sum_Mz<F: PrimeField>(
         // In a slightly counter-intuitive fashion fix_variables() fixes the right-most variables of the polynomial. So
         // for a polynomial M(x,y) and a random field element r, if we do fix_variables(M,r) we will get M(x,r).
         let M_j_y = fix_variables(&M_j, &y);
-        let z_y = z.evaluate(&y).unwrap();
+        let z_y = z.evaluate(&y);
         let M_j_z = scalar_mul(&M_j_y, &z_y);
         sum_Mz = sum_Mz.add(M_j_z);
     }
@@ -194,14 +195,11 @@ pub mod tests {
 
     use ark_pallas::{Fr, Projective};
     use ark_std::test_rng;
-    use ark_std::One;
     use ark_std::UniformRand;
-    use ark_std::Zero;
 
     use crate::ccs::tests::{get_test_ccs, get_test_z};
     use crate::commitment::{pedersen::Pedersen, CommitmentScheme};
     use crate::utils::multilinear_polynomial::tests::fix_last_variables;
-    use crate::utils::virtual_polynomial::eq_eval;
 
     #[test]
     fn test_compute_sum_Mz_over_boolean_hypercube() {
@@ -219,7 +217,7 @@ pub mod tests {
                 for j in ccs.S[i].clone() {
                     let M_j = matrix_to_mle(ccs.M[j].clone());
                     let sum_Mz = compute_sum_Mz(M_j, &z_mle, ccs.s_prime);
-                    let sum_Mz_x = sum_Mz.evaluate(&x).unwrap();
+                    let sum_Mz_x = sum_Mz.evaluate(&x);
                     Sj_prod *= sum_Mz_x;
                 }
                 r += Sj_prod * ccs.c[i];

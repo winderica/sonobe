@@ -10,16 +10,16 @@ use ark_crypto_primitives::{
         Absorb, CryptographicSponge,
     },
 };
-use ark_ec::{AffineRepr, CurveGroup};
-use ark_ff::{Field, PrimeField, ToConstraintField};
+use ark_ec::{AdditiveGroup, AffineRepr, CurveGroup};
+use ark_ff::{PrimeField, ToConstraintField};
 use ark_r1cs_std::{
     alloc::{AllocVar, AllocationMode},
     boolean::Boolean,
+    convert::ToConstraintFieldGadget,
     eq::EqGadget,
     fields::{fp::FpVar, FieldVar},
     groups::GroupOpsBounds,
     prelude::CurveVar,
-    ToConstraintFieldGadget,
 };
 use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystemRef, Namespace, SynthesisError};
 use ark_std::fmt::Debug;
@@ -255,7 +255,7 @@ where
         let mut U_vec = U_i.to_field_elements().unwrap();
         let mut u_vec = u_i.to_field_elements().unwrap();
         let (cmT_x, cmT_y, cmT_is_inf) = match cmT.into_affine().xy() {
-            Some((&x, &y)) => (x, y, C::BaseField::zero()),
+            Some((x, y)) => (x, y, C::BaseField::zero()),
             None => (
                 C::BaseField::zero(),
                 C::BaseField::zero(),
@@ -352,7 +352,7 @@ where
         assert_eq!(x.len(), CF_IO_LEN); // non-constrained sanity check
 
         // check that the points coordinates are placed as the public input x: x == [r, p1, p2, p3]
-        let r: FpVar<CF2<C>> = Boolean::le_bits_to_fp_var(&r_bits)?;
+        let r: FpVar<CF2<C>> = Boolean::le_bits_to_fp(&r_bits)?;
         let points_coords: Vec<FpVar<CF2<C>>> = [
             vec![r],
             p1.to_constraint_field()?[..2].to_vec(),
@@ -541,7 +541,7 @@ pub mod tests {
         assert!(cs.is_satisfied().unwrap());
 
         // check that the natively computed and in-circuit computed hashes match
-        let rVar = Boolean::le_bits_to_fp_var(&r_bitsVar).unwrap();
+        let rVar = Boolean::le_bits_to_fp(&r_bitsVar).unwrap();
         let r = Fq::from_bigint(BigInteger::from_bits_le(&r_bits)).unwrap();
         assert_eq!(rVar.value().unwrap(), r);
         assert_eq!(r_bitsVar.value().unwrap(), r_bits);
