@@ -6,7 +6,7 @@
 /// - IVC and the Decider (offchain Decider & onchain Decider) implementations for Nova
 use ark_crypto_primitives::sponge::{
     poseidon::{PoseidonConfig, PoseidonSponge},
-    Absorb, CryptographicSponge,
+    Absorb,
 };
 use ark_ff::{BigInteger, PrimeField};
 use ark_r1cs_std::{alloc::AllocVar, prelude::Boolean, R1CSVar};
@@ -33,7 +33,7 @@ use crate::folding::{
     traits::Dummy,
 };
 use crate::frontend::FCircuit;
-use crate::transcript::poseidon::poseidon_canonical_config;
+use crate::transcript::{poseidon::poseidon_canonical_config, Transcript};
 use crate::utils::{pp_hash, vec::is_zero_vec};
 use crate::{Curve, Error, FoldingScheme};
 use decider_eth_circuit::WitnessVar;
@@ -685,7 +685,10 @@ where
             }
         }
         // `sponge` is for digest computation.
-        let sponge = PoseidonSponge::<C1::ScalarField>::new(&self.poseidon_config);
+        let sponge = PoseidonSponge::<C1::ScalarField>::new_with_pp_hash(
+            &self.poseidon_config,
+            self.pp_hash,
+        );
         // `transcript` is for challenge generation.
         let mut transcript = sponge.clone();
 
@@ -731,7 +734,6 @@ where
                 &self.cs_pp,
                 &self.r1cs,
                 &mut transcript,
-                self.pp_hash,
                 &self.W_i,
                 &self.U_i,
                 &self.w_i,
@@ -790,7 +792,6 @@ where
                 &mut transcript,
                 &self.cf_r1cs,
                 &self.cf_cs_pp,
-                self.pp_hash,
                 self.cf_W_i.clone(),
                 self.cf_U_i.clone(),
                 vec![cfW_w_i, cfE_w_i],
@@ -946,7 +947,8 @@ where
             cf_U_i,
         } = ivc_proof;
 
-        let sponge = PoseidonSponge::<C1::ScalarField>::new(&vp.poseidon_config);
+        let sponge =
+            PoseidonSponge::<C1::ScalarField>::new_with_pp_hash(&vp.poseidon_config, vp.pp_hash()?);
 
         if num_steps == C1::ScalarField::zero() {
             if z_0 != z_i {
@@ -959,16 +961,14 @@ where
             return Err(Error::IVCVerificationFail);
         }
 
-        let pp_hash = vp.pp_hash()?;
-
         // check that u_i's output points to the running instance
         // u_i.X[0] == H(i, z_0, z_i, U_i)
-        let expected_u_i_x = U_i.hash(&sponge, pp_hash, num_steps, &z_0, &z_i);
+        let expected_u_i_x = U_i.hash(&sponge, num_steps, &z_0, &z_i);
         if expected_u_i_x != u_i.x[0] {
             return Err(Error::IVCVerificationFail);
         }
         // u_i.X[1] == H(cf_U_i)
-        let expected_cf_u_i_x = cf_U_i.hash_cyclefold(&sponge, pp_hash);
+        let expected_cf_u_i_x = cf_U_i.hash_cyclefold(&sponge);
         if expected_cf_u_i_x != u_i.x[1] {
             return Err(Error::IVCVerificationFail);
         }
